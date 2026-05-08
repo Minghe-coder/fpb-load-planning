@@ -8,6 +8,7 @@ import { signOut, useSession } from "next-auth/react"
 import {
   LayoutDashboard, Truck, Layers, Package,
   Users, Settings, BarChart3, FileText, Building2, LogOut,
+  ClipboardList, Warehouse,
 } from "lucide-react"
 
 const nav = [
@@ -20,6 +21,8 @@ const nav = [
   {
     label: "Operativo",
     items: [
+      { href: "/ordini", label: "Ordini", icon: ClipboardList },
+      { href: "/magazzino", label: "Magazzino", icon: Warehouse },
       { href: "/spedizioni", label: "Spedizioni", icon: Truck },
       { href: "/palletizer", label: "Palletizer", icon: Layers },
       { href: "/analisi", label: "Analisi impatto", icon: BarChart3 },

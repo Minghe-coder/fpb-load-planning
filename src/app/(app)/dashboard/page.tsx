@@ -9,6 +9,11 @@ import {
   TrendingUp,
   AlertTriangle,
   ArrowRight,
+  ClipboardList,
+  Warehouse,
+  Clock,
+  AlertCircle,
+  CheckCircle,
 } from "lucide-react"
 import Link from "next/link"
 
@@ -124,6 +129,89 @@ export default async function DashboardPage() {
           <ArrowRight className="ml-auto h-4 w-4 text-indigo-600 group-hover:translate-x-0.5 transition-transform" />
         </Link>
       )}
+
+      {/* Ordini + Magazzino */}
+      <div className="grid grid-cols-2 gap-6">
+        {/* Ordini */}
+        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+            <div className="flex items-center gap-2">
+              <ClipboardList className="h-4 w-4 text-indigo-500" />
+              <h2 className="text-base font-semibold text-slate-900">Ordini</h2>
+            </div>
+            <Link href="/ordini" className="text-xs text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1">
+              Vedi tutti <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 divide-x divide-y divide-slate-100">
+            {[
+              { label: "In attesa",       value: stats.orders.pending,       icon: Clock,         color: "text-slate-500",  bg: "bg-slate-50" },
+              { label: "In preparazione", value: stats.orders.inPreparation, icon: AlertCircle,   color: "text-amber-600",  bg: "bg-amber-50" },
+              { label: "Pronti",          value: stats.orders.ready,         icon: CheckCircle,   color: "text-green-600",  bg: "bg-green-50" },
+              { label: "Spediti",         value: stats.orders.shipped,       icon: Truck,         color: "text-blue-600",   bg: "bg-blue-50" },
+            ].map(({ label, value, icon: Icon, color, bg }) => (
+              <div key={label} className={`flex items-center gap-3 px-5 py-4 ${bg}`}>
+                <Icon className={`h-5 w-5 shrink-0 ${color}`} strokeWidth={1.75} />
+                <div>
+                  <p className="text-2xl font-bold text-slate-900">{value}</p>
+                  <p className="text-xs text-slate-500">{label}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          {stats.orders.total === 0 && (
+            <div className="px-6 py-4 text-center">
+              <p className="text-sm text-slate-400">Nessun ordine registrato</p>
+              <Link href="/ordini/nuovo" className="mt-1 inline-block text-xs text-indigo-600 hover:underline">Crea il primo ordine</Link>
+            </div>
+          )}
+        </div>
+
+        {/* Magazzino */}
+        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+            <div className="flex items-center gap-2">
+              <Warehouse className="h-4 w-4 text-violet-500" />
+              <h2 className="text-base font-semibold text-slate-900">Magazzino</h2>
+            </div>
+            <Link href="/magazzino" className="text-xs text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1">
+              Apri <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
+          <div className="px-6 py-5 flex flex-col gap-3">
+            {/* Urgent: in preparation */}
+            <div className={`flex items-center justify-between rounded-xl px-4 py-3 ${stats.orders.inPreparation > 0 ? "bg-amber-50 border border-amber-200" : "bg-slate-50 border border-slate-100"}`}>
+              <div className="flex items-center gap-2">
+                <AlertCircle className={`h-4 w-4 ${stats.orders.inPreparation > 0 ? "text-amber-600" : "text-slate-300"}`} />
+                <span className="text-sm font-medium text-slate-700">In preparazione</span>
+              </div>
+              <span className={`text-xl font-bold ${stats.orders.inPreparation > 0 ? "text-amber-700" : "text-slate-400"}`}>
+                {stats.orders.inPreparation}
+              </span>
+            </div>
+            {/* Ready to ship */}
+            <div className={`flex items-center justify-between rounded-xl px-4 py-3 ${stats.orders.ready > 0 ? "bg-green-50 border border-green-200" : "bg-slate-50 border border-slate-100"}`}>
+              <div className="flex items-center gap-2">
+                <CheckCircle className={`h-4 w-4 ${stats.orders.ready > 0 ? "text-green-600" : "text-slate-300"}`} />
+                <span className="text-sm font-medium text-slate-700">Pronti per spedizione</span>
+              </div>
+              <span className={`text-xl font-bold ${stats.orders.ready > 0 ? "text-green-700" : "text-slate-400"}`}>
+                {stats.orders.ready}
+              </span>
+            </div>
+            {stats.orders.ready > 0 && (
+              <Link
+                href="/magazzino"
+                className="flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
+              >
+                <Warehouse className="h-4 w-4" />
+                Apri vista magazzino
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* Grafico margini */}
       <div className="rounded-xl border border-slate-200 bg-white shadow-sm">

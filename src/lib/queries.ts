@@ -3,7 +3,7 @@ import { db } from "./db"
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
 export async function getDashboardStats() {
-  const [productCount, customerCount, shipmentCount, pricings, overheadRate] =
+  const [productCount, customerCount, shipmentCount, pricings, overheadRate, orderStats] =
     await Promise.all([
       db.product.count({ where: { isActive: true } }),
       db.customer.count({ where: { isActive: true } }),
@@ -13,6 +13,7 @@ export async function getDashboardStats() {
         include: { product: true },
       }),
       db.overheadRate.findFirst({ orderBy: { fiscalYear: "desc" } }),
+      db.order.groupBy({ by: ["status"], _count: { _all: true } }),
     ])
 
   const ratePct = Number(overheadRate?.ratePct ?? 0.2664)
@@ -80,6 +81,9 @@ export async function getDashboardStats() {
     ? realMargins.reduce((s, m) => s + m, 0) / realMargins.length
     : null
 
+  const orderCount = (status: string) =>
+    orderStats.find((s) => s.status === status)?._count._all ?? 0
+
   return {
     productCount,
     customerCount,
@@ -90,6 +94,13 @@ export async function getDashboardStats() {
     productsWithoutPhysical,
     overheadRatePct: ratePct,
     overheadYear: overheadRate?.fiscalYear ?? 2024,
+    orders: {
+      pending: orderCount("PENDING"),
+      inPreparation: orderCount("IN_PREPARATION"),
+      ready: orderCount("READY"),
+      shipped: orderCount("SHIPPED"),
+      total: orderStats.reduce((s, r) => s + r._count._all, 0),
+    },
   }
 }
 
@@ -298,6 +309,64 @@ export async function getPricingById(id: string) {
   return db.customerPricing.findUnique({
     where: { id },
     include: { customer: true, product: true },
+  })
+}
+
+// ─── Ordini ───────────────────────────────────────────────────────────────────
+
+export async function getOrders(opts?: { status?: string; type?: string; q?: string }) {
+  const { status, type, q } = opts ?? {}
+  return db.order.findMany({
+    where: {
+      ...(status ? { status } : {}),
+      ...(type ? { type } : {}),
+      ...(q
+        ? {
+            OR: [
+              { orderNumber: { contains: q } },
+              { customer: { name: { contains: q } } },
+              { supplier: { name: { contains: q } } },
+            ],
+          }
+        : {}),
+    },
+    include: {
+      customer: { select: { id: true, name: true } },
+      supplier: { select: { id: true, name: true } },
+      _count: { select: { lines: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  })
+}
+
+export async function getOrderDetail(id: string) {
+  return db.order.findUnique({
+    where: { id },
+    include: {
+      customer: true,
+      supplier: true,
+      shipment: { select: { id: true, code: true } },
+      preparedBy: { select: { id: true, name: true } },
+      lines: {
+        include: { product: { include: { physical: true } } },
+        orderBy: { product: { name: "asc" } },
+      },
+    },
+  })
+}
+
+export async function getOrdersForWarehouse() {
+  return db.order.findMany({
+    where: { status: { in: ["PENDING", "IN_PREPARATION"] } },
+    include: {
+      customer: { select: { id: true, name: true } },
+      supplier: { select: { id: true, name: true } },
+      lines: {
+        include: { product: { include: { physical: true } } },
+        orderBy: { isPrepared: "asc" },
+      },
+    },
+    orderBy: [{ requestedDate: "asc" }, { createdAt: "asc" }],
   })
 }
 

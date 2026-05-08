@@ -15,6 +15,7 @@ model Supplier {
   name      String
   country   String?
   products  Product[]
+  orders    Order[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 }
@@ -37,6 +38,7 @@ model Product {
   physical        ProductPhysical?
   customerPricing CustomerPricing[]
   shipmentLines   ShipmentLine[]
+  orderLines      OrderLine[]
   priceHistory    ProductPriceHistory[]
 
   createdAt DateTime @default(now())
@@ -79,6 +81,7 @@ model Customer {
 
   pricing       CustomerPricing[]
   shipmentLines ShipmentLine[]
+  orders        Order[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -135,6 +138,7 @@ model Shipment {
   notes                 String?
 
   lines     ShipmentLine[]
+  orders    Order[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -183,10 +187,51 @@ model AppSetting {
 // ─── AUTH ─────────────────────────────────────────────────────────────────────
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  name      String?
-  role      String   @default("USER")   // USER | ADMIN
-  createdAt DateTime @default(now())
+  id             String   @id @default(cuid())
+  email          String   @unique
+  password       String
+  name           String?
+  role           String   @default("USER")   // USER | ADMIN | WAREHOUSE
+  createdAt      DateTime @default(now())
+  preparedOrders Order[]
+}
+
+// ─── ORDINI ───────────────────────────────────────────────────────────────────
+
+model Order {
+  id            String      @id @default(cuid())
+  orderNumber   String?
+  type          String                        // INCOMING | OUTGOING
+  status        String      @default("PENDING") // PENDING | IN_PREPARATION | READY | SHIPPED
+  customerId    String?
+  customer      Customer?   @relation(fields: [customerId], references: [id])
+  supplierId    String?
+  supplier      Supplier?   @relation(fields: [supplierId], references: [id])
+  requestedDate DateTime?
+  notes         String?
+  warehouseNotes String?
+  sourceFile    String?     // nome file PDF originale
+  shipmentId    String?
+  shipment      Shipment?   @relation(fields: [shipmentId], references: [id])
+  preparedAt    DateTime?
+  preparedById  String?
+  preparedBy    User?       @relation(fields: [preparedById], references: [id])
+  lines         OrderLine[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model OrderLine {
+  id               String  @id @default(cuid())
+  orderId          String
+  order            Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId        String
+  product          Product @relation(fields: [productId], references: [id])
+  quantityOrdered  Int
+  quantityPrepared Int     @default(0)
+  lotNumber        String?
+  isPrepared       Boolean @default(false)
+  notes            String?
+
+  @@index([orderId])
 }
