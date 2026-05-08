@@ -30,5 +30,11 @@ Thumbs.db
 .idea/
 *.swp
 
+# Build artifacts
+tsconfig.tsbuildinfo
+
+# Claude Code
+.claude/
+
 # Backup
 fpb-backups/

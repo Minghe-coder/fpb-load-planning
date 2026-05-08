@@ -25,7 +25,11 @@ export default function LoginPage() {
     })
 
     if (res?.error) {
-      setError("Email o password non corretti.")
+      setError(
+        res.error.includes("Troppi tentativi")
+          ? res.error
+          : "Email o password non corretti."
+      )
       setLoading(false)
     } else {
       router.push("/dashboard")
