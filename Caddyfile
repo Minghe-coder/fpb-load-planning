@@ -1,0 +1,11 @@
+# Sostituisci "tuo-dominio.com" con il dominio reale del cliente
+tuo-dominio.com {
+    reverse_proxy app:3000
+    encode gzip
+    header {
+        # Sicurezza base
+        X-Frame-Options SAMEORIGIN
+        X-Content-Type-Options nosniff
+        Referrer-Policy strict-origin-when-cross-origin
+    }
+}

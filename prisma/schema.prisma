@@ -1,0 +1,192 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./fpb.db"
+}
+
+// ─── ANAGRAFICA ───────────────────────────────────────────────────────────────
+
+model Supplier {
+  id        String    @id @default(cuid())
+  code      String    @unique
+  name      String
+  country   String?
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Product {
+  id              String       @id @default(cuid())
+  sku             String       @unique
+  name            String
+  supplierId      String
+  supplier        Supplier     @relation(fields: [supplierId], references: [id])
+  purchasePrice   Decimal
+  marketingCredit Decimal      @default(0)
+  unitsPerCarton  Int?
+  unitOfSale      String       @default("CARTON")   // PIECE | CARTON | PALLET
+  foodCategory    String       @default("DRY")      // DRY | LIQUID | GLASS | PERISHABLE
+  fragilityClass  Int          @default(2)           // 1=base  2=medio  3=solo-cima
+  isActive        Boolean      @default(true)
+  notes           String?
+
+  physical        ProductPhysical?
+  customerPricing CustomerPricing[]
+  shipmentLines   ShipmentLine[]
+  priceHistory    ProductPriceHistory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ProductPriceHistory {
+  id         String   @id @default(cuid())
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  oldPrice   Decimal
+  newPrice   Decimal
+  changedAt  DateTime @default(now())
+  notes      String?
+
+  @@index([productId])
+}
+
+model ProductPhysical {
+  id              String  @id @default(cuid())
+  productId       String  @unique
+  product         Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  // Dimensioni e peso PER CARTONE (unità di spedizione)
+  grossWeightKg   Decimal
+  lengthCm        Decimal
+  widthCm         Decimal
+  heightCm        Decimal
+  cartonsPerLayer Int?
+  layersPerPallet Int?
+
+  updatedAt DateTime @updatedAt
+}
+
+model Customer {
+  id           String          @id @default(cuid())
+  name         String          @unique
+  type         String          @default("RETAIL")  // GDO | RETAIL | RESTAURANT | ETHNIC
+  isActive     Boolean         @default(true)
+
+  pricing       CustomerPricing[]
+  shipmentLines ShipmentLine[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── OVERHEAD E PRICING ───────────────────────────────────────────────────────
+
+model OverheadRate {
+  id           String   @id @default(cuid())
+  fiscalYear   Int      @unique
+  ratePct      Decimal                       // 0.2664 per il 2024
+  revenueEur   Decimal?
+  totalCostEur Decimal?
+  notes        String?
+  createdAt    DateTime @default(now())
+}
+
+model CustomerPricing {
+  id                       String    @id @default(cuid())
+  customerId               String
+  customer                 Customer  @relation(fields: [customerId], references: [id])
+  productId                String
+  product                  Product   @relation(fields: [productId], references: [id])
+
+  grossPrice               Decimal
+  discount1                Decimal   @default(0)
+  discount2                Decimal   @default(0)
+  discount3                Decimal   @default(0)
+  contractualContribPct    Decimal   @default(0)
+  promotionalContribPct    Decimal   @default(0)
+  promotionalActivitiesPct Decimal   @default(0)
+  listingFeePct            Decimal   @default(0)
+  commissionPct            Decimal   @default(0)
+  netNetPrice              Decimal                  // calcolato e salvato
+
+  validFrom DateTime  @default(now())
+  validTo   DateTime?
+
+  @@unique([customerId, productId, validFrom])
+}
+
+// ─── SPEDIZIONI ───────────────────────────────────────────────────────────────
+
+model Shipment {
+  id                    String         @id @default(cuid())
+  code                  String         @unique
+  legType               String                        // IMPORT | DISTRIBUTION
+  carrier               String
+  routeFrom             String
+  routeTo               String
+  shipmentDate          DateTime
+  totalCostEur          Decimal
+  volumetricCoefficient Decimal        @default(250)  // kg/m³
+  notes                 String?
+
+  lines     ShipmentLine[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ShipmentLine {
+  id         String    @id @default(cuid())
+  shipmentId String
+  shipment   Shipment  @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product   @relation(fields: [productId], references: [id])
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id])
+
+  quantityCartons Int
+  quantityUnits   Int
+
+  // Calcolati dall'engine al salvataggio
+  realWeightKg            Decimal
+  volumeM3                Decimal
+  volumetricWeightKg      Decimal
+  effectiveWeightKg       Decimal  // max(real, volumetric)
+  allocatedCostEur        Decimal  // totale riga
+  allocatedCostPerUnitEur Decimal  // €/pezzo
+
+  @@index([shipmentId])
+  @@index([productId, customerId])
+}
+
+// ─── CONFIGURAZIONI ───────────────────────────────────────────────────────────
+
+model PalletConfig {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  lengthCm    Int     @default(120)
+  widthCm     Int     @default(80)
+  maxHeightCm Int     @default(180)
+  maxWeightKg Int     @default(800)
+  isDefault   Boolean @default(false)
+}
+
+model AppSetting {
+  key   String @id
+  value String
+}
+
+// ─── AUTH ─────────────────────────────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  role      String   @default("USER")   // USER | ADMIN
+  createdAt DateTime @default(now())
+}

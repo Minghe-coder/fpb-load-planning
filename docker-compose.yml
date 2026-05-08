@@ -1,0 +1,37 @@
+services:
+  app:
+    build: .
+    container_name: fpb-app
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: file:/data/fpb.db
+      AUTH_SECRET: ${AUTH_SECRET}
+      NEXTAUTH_URL: ${NEXTAUTH_URL}
+    volumes:
+      - db_data:/data
+    networks:
+      - web
+    depends_on: []
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: fpb-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - web
+
+volumes:
+  db_data:
+  caddy_data:
+  caddy_config:
+
+networks:
+  web:

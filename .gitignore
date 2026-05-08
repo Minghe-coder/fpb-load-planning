@@ -1,0 +1,34 @@
+# Dipendenze
+node_modules/
+
+# Build Next.js
+.next/
+out/
+
+# Database (non versionare mai il DB reale)
+prisma/*.db
+prisma/*.db-journal
+prisma/*.db-wal
+prisma/*.db-shm
+
+# Variabili d'ambiente (contengono segreti)
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Backup
+fpb-backups/
