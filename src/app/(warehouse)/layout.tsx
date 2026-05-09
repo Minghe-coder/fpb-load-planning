@@ -1,6 +1,17 @@
+import type { Metadata } from "next"
 import Image from "next/image"
 import { auth } from "@/lib/auth"
 import { WarehouseLogout } from "./logout-button"
+
+export const metadata: Metadata = {
+  title: "FPB Magazzino",
+  manifest: "/manifest-warehouse.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Magazzino",
+  },
+}
 
 export default async function WarehouseLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()

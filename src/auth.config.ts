@@ -20,12 +20,23 @@ export const authConfig: NextAuthConfig = {
     },
     authorized({ auth, request }) {
       const isLoggedIn = !!auth?.user
+      const role = (auth?.user as { role?: string } | undefined)?.role
       const { pathname } = request.nextUrl
+
       if (pathname === "/login") {
-        if (isLoggedIn) return Response.redirect(new URL("/dashboard", request.nextUrl))
-        return true
+        if (!isLoggedIn) return true
+        const dest = role === "WAREHOUSE" ? "/magazzino" : "/dashboard"
+        return Response.redirect(new URL(dest, request.nextUrl))
       }
-      return isLoggedIn
+
+      if (!isLoggedIn) return Response.redirect(new URL("/login", request.nextUrl))
+
+      // Utenti WAREHOUSE: solo /magazzino e sotto-route
+      if (role === "WAREHOUSE" && !pathname.startsWith("/magazzino")) {
+        return Response.redirect(new URL("/magazzino", request.nextUrl))
+      }
+
+      return true
     },
   },
 }

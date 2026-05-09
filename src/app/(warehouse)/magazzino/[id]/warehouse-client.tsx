@@ -5,10 +5,11 @@ import dynamic from "next/dynamic"
 import { markLinePrepared, updateOrderNotes } from "@/lib/actions/order"
 import { palletize, EUR_PALLET } from "@/lib/engine/palletizer"
 import { buildProductColorMap } from "@/components/pallet-viewer-3d"
+import Link from "next/link"
 import {
   CheckCircle2, Circle, Package, Weight,
   ChevronDown, ChevronUp, ChevronLeft, ChevronRight as ChevronRightIcon,
-  MessageSquare, Loader2, Layers,
+  MessageSquare, Loader2, Layers, Printer,
 } from "lucide-react"
 
 const PalletViewer3D = dynamic(
@@ -310,6 +311,16 @@ export function WarehouseOrderClient({ order }: { order: OrderData }) {
           )}
         </div>
       )}
+
+      {/* Stampa */}
+      <Link
+        href={`/ordini/${order.id}/stampa`}
+        target="_blank"
+        className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3.5 text-base font-medium text-slate-600 shadow-sm hover:bg-slate-50 active:scale-[0.99] transition-all"
+      >
+        <Printer className="h-5 w-5 text-slate-400" />
+        Stampa lista picking
+      </Link>
 
       {/* Warehouse notes */}
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-3">

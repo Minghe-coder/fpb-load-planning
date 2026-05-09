@@ -57,18 +57,28 @@ function generateCode(legType: string): string {
 
 // ─── Componente principale ────────────────────────────────────────────────────
 
-export function NewShipmentForm({ products, customers }: { products: ProductData[]; customers: CustomerData[] }) {
+export function NewShipmentForm({
+  products, customers, initialLines, initialCustomerId, orderIds,
+}: {
+  products: ProductData[]
+  customers: CustomerData[]
+  initialLines?: { productId: string; customerId: string; quantityCartons: string }[]
+  initialCustomerId?: string
+  orderIds?: string[]
+}) {
   const [legType, setLegType] = useState<"IMPORT" | "DISTRIBUTION">("DISTRIBUTION")
   const [code, setCode] = useState(() => generateCode("DISTRIBUTION"))
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
   const [carrier, setCarrier] = useState("")
-  // DISTRIBUTION: routeFrom = FPB (fisso), routeTo = destinazione libera
-  // IMPORT:       routeFrom = origine libera, routeTo = FPB (fisso)
-  const [freeRoute, setFreeRoute] = useState("")   // il campo libero (cambia lato al cambio tipo)
+  const [freeRoute, setFreeRoute] = useState("")
   const [coeff, setCoeff] = useState("250")
-  const [shipmentCustomerId, setShipmentCustomerId] = useState("") // cliente unico (DISTRIBUTION)
+  const [shipmentCustomerId, setShipmentCustomerId] = useState(initialCustomerId ?? "")
   const [isMultiCustomer, setIsMultiCustomer] = useState(false)
-  const [lines, setLines] = useState<LineState[]>([emptyLine()])
+  const [lines, setLines] = useState<LineState[]>(
+    initialLines?.length
+      ? initialLines.map((l) => ({ uid: Math.random().toString(36).slice(2), ...l }))
+      : [emptyLine()]
+  )
   const [submitting, setSubmitting] = useState(false)
   const [serverError, setServerError] = useState("")
   const [rightTab, setRightTab] = useState<"alloc" | "pallet">("alloc")
@@ -184,6 +194,7 @@ export function NewShipmentForm({ products, customers }: { products: ProductData
         customerId: isMultiCustomer ? (l.customerId || null) : (legType === "DISTRIBUTION" ? shipmentCustomerId : null),
         quantityCartons: parseInt(l.quantityCartons),
       })),
+      orderIds: orderIds?.length ? orderIds : undefined,
     })
     if (result?.error) { setServerError(result.error); setSubmitting(false) }
   }

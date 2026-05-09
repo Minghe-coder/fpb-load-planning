@@ -1,0 +1,14 @@
+{
+  "name": "FPB Magazzino",
+  "short_name": "Magazzino",
+  "description": "Vista magazzino — preparazione ordini",
+  "start_url": "/magazzino",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/pwa-icon-warehouse.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/pwa-icon-warehouse.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

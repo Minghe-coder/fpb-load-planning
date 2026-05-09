@@ -4,7 +4,7 @@ import { getOrderDetail } from "@/lib/queries"
 import { updateOrderStatus, deleteOrder } from "@/lib/actions/order"
 import {
   ArrowLeft, Package, Truck, Clock, CheckCircle, AlertCircle,
-  Send, FileText, Trash2,
+  Send, FileText, Printer,
 } from "lucide-react"
 import { DeleteOrderButton } from "./delete-button"
 import { StatusSelect } from "./status-select"
@@ -50,6 +50,13 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           <p className="mt-1 text-sm text-slate-500">{counterpart}</p>
         </div>
         <div className="flex gap-2">
+          <Link
+            href={`/ordini/${id}/stampa`}
+            target="_blank"
+            className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 transition-colors"
+          >
+            <Printer className="h-4 w-4" /> Stampa
+          </Link>
           <StatusSelect orderId={id} currentStatus={order.status} />
           <DeleteOrderButton orderId={id} />
         </div>

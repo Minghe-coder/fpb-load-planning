@@ -21,6 +21,7 @@ export interface CreateShipmentInput {
   totalCostEur: number
   volumetricCoefficient: number
   lines: ShipmentLineInput[]
+  orderIds?: string[]
 }
 
 export async function createShipment(
@@ -105,7 +106,16 @@ export async function createShipment(
     },
   })
 
+  // Collega ordini alla spedizione e li segna come spediti
+  if (input.orderIds?.length) {
+    await db.order.updateMany({
+      where: { id: { in: input.orderIds } },
+      data: { shipmentId: shipment.id, status: "SHIPPED" },
+    })
+  }
+
   revalidatePath("/spedizioni")
+  revalidatePath("/ordini")
   revalidatePath("/dashboard")
   redirect(`/spedizioni/${shipment.id}`)
 }

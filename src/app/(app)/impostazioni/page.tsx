@@ -1,14 +1,20 @@
 import { db } from "@/lib/db"
+import { auth } from "@/lib/auth"
 import { OverheadRateForm } from "./overhead-form"
+import { UserManagement } from "./user-form"
 import { fmtEuro } from "@/lib/utils"
 
 export const dynamic = "force-dynamic"
 
 export default async function ImpostazioniPage() {
-  const [rates, palletConfigs] = await Promise.all([
+  const [rates, palletConfigs, users, session] = await Promise.all([
     db.overheadRate.findMany({ orderBy: { fiscalYear: "desc" } }),
     db.palletConfig.findMany(),
+    db.user.findMany({ orderBy: { createdAt: "asc" }, select: { id: true, name: true, email: true, role: true, createdAt: true } }),
+    auth(),
   ])
+  const currentUserId = (session?.user as { id?: string })?.id ?? ""
+  const isAdmin = (session?.user as { role?: string })?.role === "ADMIN"
 
   return (
     <div className="flex flex-col gap-6 p-8 max-w-2xl">
@@ -57,6 +63,17 @@ export default async function ImpostazioniPage() {
           <OverheadRateForm />
         </div>
       </div>
+
+      {/* Utenti */}
+      {isAdmin && (
+        <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+          <div className="border-b border-slate-100 px-6 py-4">
+            <h2 className="text-base font-semibold text-slate-900">Utenti</h2>
+            <p className="text-xs text-slate-500 mt-0.5">Gestisci gli accessi all&apos;applicazione</p>
+          </div>
+          <UserManagement users={users} currentUserId={currentUserId} />
+        </div>
+      )}
 
       {/* Pallet config */}
       <div className="rounded-xl border border-slate-200 bg-white shadow-sm">

@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { getOrders } from "@/lib/queries"
-import { Plus, Package, Truck, Clock, CheckCircle, AlertCircle, Send } from "lucide-react"
+import { Plus, Package, Truck, Clock, CheckCircle, AlertCircle, Send, ArrowRight } from "lucide-react"
 
 const STATUS_LABEL: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   PENDING:        { label: "In attesa",       color: "bg-slate-100 text-slate-600",   icon: <Clock className="h-3 w-3" /> },
@@ -29,6 +29,10 @@ export default async function OrdiniPage({
     ready: orders.filter((o) => o.status === "READY").length,
   }
 
+  const readyOutgoingIds = orders
+    .filter((o) => o.status === "READY" && o.type === "OUTGOING")
+    .map((o) => o.id)
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -45,6 +49,23 @@ export default async function OrdiniPage({
           Nuovo ordine
         </Link>
       </div>
+
+      {/* Banner spedizione */}
+      {readyOutgoingIds.length > 0 && (
+        <Link
+          href={`/spedizioni/new?da=${readyOutgoingIds.join(",")}`}
+          className="flex items-center gap-3 rounded-xl border border-green-200 bg-green-50 px-5 py-3.5 text-sm hover:bg-green-100 transition-colors group"
+        >
+          <CheckCircle className="h-5 w-5 text-green-600 shrink-0" />
+          <span className="text-green-800 font-medium">
+            {readyOutgoingIds.length} {readyOutgoingIds.length === 1 ? "ordine pronto" : "ordini pronti"} per la spedizione
+          </span>
+          <span className="text-green-600">— crea una spedizione DISTRIBUTION pre-compilata</span>
+          <span className="ml-auto flex items-center gap-1 font-semibold text-green-700 group-hover:translate-x-0.5 transition-transform">
+            Crea spedizione <ArrowRight className="h-4 w-4" />
+          </span>
+        </Link>
+      )}
 
       {/* Status pills */}
       <div className="flex gap-2 flex-wrap">
