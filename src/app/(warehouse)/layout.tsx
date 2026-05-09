@@ -21,10 +21,13 @@ export default async function WarehouseLayout({ children }: { children: React.Re
       {/* Top bar */}
       <header className="sticky top-0 z-10 flex items-center justify-between bg-slate-900 px-4 py-3 shadow-md">
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center rounded-lg bg-white px-2 py-1">
+          <div className="flex items-center justify-center rounded-xl bg-white px-2.5 py-1.5 shadow-sm">
             <Image src="/logo.png" alt="FPB" width={52} height={18} className="object-contain" priority />
           </div>
-          <span className="text-xs font-semibold text-slate-400 tracking-widest uppercase">Magazzino</span>
+          <div>
+            <p className="text-[13px] font-extrabold text-white leading-none tracking-tight">Load Planning</p>
+            <p className="mt-1 text-[9px] font-bold tracking-[0.14em] text-amber-400 uppercase">Magazzino</p>
+          </div>
         </div>
         {session?.user && (
           <div className="flex items-center gap-3">

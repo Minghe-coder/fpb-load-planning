@@ -47,14 +47,15 @@ export function Sidebar() {
     <aside className="fixed inset-y-0 left-0 z-40 flex w-[var(--sidebar-w)] flex-col bg-slate-900">
       {/* Logo */}
       <div className="flex h-16 items-center px-4 border-b border-slate-800">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center rounded-lg bg-white px-2 py-1.5">
-            <Image src="/logo.png" alt="FPB" width={72} height={24} className="object-contain" priority />
+        <Link href="/dashboard" className="flex items-center gap-3 group">
+          <div className="flex items-center justify-center rounded-xl bg-white px-2.5 py-1.5 shadow-sm group-hover:shadow-md transition-shadow">
+            <Image src="/logo.png" alt="FPB" width={60} height={20} className="object-contain" priority />
           </div>
-          <p className="text-[10px] font-medium text-slate-400 leading-tight">
-            Load<br />Planning
-          </p>
-        </div>
+          <div>
+            <p className="text-[13px] font-extrabold text-white leading-none tracking-tight">Load Planning</p>
+            <p className="mt-1 text-[9px] font-bold tracking-[0.14em] text-indigo-400 uppercase">Piattaforma logistica</p>
+          </div>
+        </Link>
       </div>
 
       {/* Navigation */}
