@@ -2,6 +2,7 @@ import { db } from "@/lib/db"
 import { auth } from "@/lib/auth"
 import { OverheadRateForm } from "./overhead-form"
 import { UserManagement } from "./user-form"
+import { PushToggle } from "@/components/push-toggle"
 import { fmtEuro } from "@/lib/utils"
 
 export const dynamic = "force-dynamic"
@@ -74,6 +75,19 @@ export default async function ImpostazioniPage() {
           <UserManagement users={users} currentUserId={currentUserId} />
         </div>
       )}
+
+      {/* Notifiche push */}
+      <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+        <div className="border-b border-slate-100 px-6 py-4">
+          <h2 className="text-base font-semibold text-slate-900">Notifiche push</h2>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Ricevi una notifica su questo dispositivo quando un ordine è completamente preparato
+          </p>
+        </div>
+        <div className="px-6 py-4">
+          <PushToggle />
+        </div>
+      </div>
 
       {/* Pallet config */}
       <div className="rounded-xl border border-slate-200 bg-white shadow-sm">

@@ -187,13 +187,14 @@ model AppSetting {
 // ─── AUTH ─────────────────────────────────────────────────────────────────────
 
 model User {
-  id             String   @id @default(cuid())
-  email          String   @unique
-  password       String
-  name           String?
-  role           String   @default("USER")   // USER | ADMIN | WAREHOUSE
-  createdAt      DateTime @default(now())
-  preparedOrders Order[]
+  id                String             @id @default(cuid())
+  email             String             @unique
+  password          String
+  name              String?
+  role              String             @default("USER")   // USER | ADMIN | WAREHOUSE
+  createdAt         DateTime           @default(now())
+  preparedOrders    Order[]
+  pushSubscriptions PushSubscription[]
 }
 
 // ─── ORDINI ───────────────────────────────────────────────────────────────────
@@ -234,4 +235,16 @@ model OrderLine {
   notes            String?
 
   @@index([orderId])
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }

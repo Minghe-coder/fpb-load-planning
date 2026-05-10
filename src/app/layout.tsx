@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import { SessionProvider } from "@/components/session-provider"
+import { SwRegister } from "@/components/sw-register"
 import "./globals.css"
 
 const inter = Inter({
@@ -26,7 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <link rel="apple-touch-icon" href="/pwa-icon.png" />
       </head>
-      <body className="font-sans"><SessionProvider>{children}</SessionProvider></body>
+      <body className="font-sans"><SessionProvider><SwRegister />{children}</SessionProvider></body>
     </html>
   )
 }

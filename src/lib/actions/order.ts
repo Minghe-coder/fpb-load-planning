@@ -2,6 +2,7 @@
 
 import { db } from "@/lib/db"
 import { revalidatePath } from "next/cache"
+import { sendPushToAdmins } from "@/lib/push"
 
 export async function createOrder(input: {
   orderNumber?: string
@@ -64,6 +65,13 @@ export async function markLinePrepared(lineId: string, isPrepared: boolean) {
         where: { id: line.orderId },
         data: { status: "READY", preparedAt: new Date() },
       })
+      const orderNum = line.order.orderNumber ?? `#${line.orderId.slice(-6).toUpperCase()}`
+      sendPushToAdmins({
+        title: "Ordine pronto ✓",
+        body: `L'ordine ${orderNum} è completamente preparato`,
+        url: `/ordini/${line.orderId}`,
+        tag: `order-ready-${line.orderId}`,
+      }).catch(() => {}) // fire-and-forget, non blocca il flusso
     } else if (line.order.status === "PENDING") {
       await db.order.update({
         where: { id: line.orderId },
