@@ -39,6 +39,7 @@ model Product {
   customerPricing CustomerPricing[]
   shipmentLines   ShipmentLine[]
   orderLines      OrderLine[]
+  lots            ProductLot[]
   priceHistory    ProductPriceHistory[]
 
   createdAt DateTime @default(now())
@@ -218,23 +219,48 @@ model Order {
   preparedById  String?
   preparedBy    User?       @relation(fields: [preparedById], references: [id])
   lines         OrderLine[]
+  receivedLots  ProductLot[]  // lotti generati da questo ordine INCOMING
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 }
 
 model OrderLine {
-  id               String  @id @default(cuid())
+  id               String       @id @default(cuid())
   orderId          String
-  order            Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order            Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productId        String
-  product          Product @relation(fields: [productId], references: [id])
+  product          Product      @relation(fields: [productId], references: [id])
   quantityOrdered  Int
-  quantityPrepared Int     @default(0)
-  lotNumber        String?
-  isPrepared       Boolean @default(false)
+  quantityPrepared Int          @default(0)
+  lotNumber        String?      // stringa libera (legacy / import PDF)
+  lotId            String?      // collegamento al lotto preciso per FIFO
+  lot              ProductLot?  @relation(fields: [lotId], references: [id])
+  isPrepared       Boolean      @default(false)
   notes            String?
 
   @@index([orderId])
+  @@index([lotId])
+}
+
+// ─── LOTTI / FIFO ─────────────────────────────────────────────────────────────
+
+model ProductLot {
+  id                String      @id @default(cuid())
+  productId         String
+  product           Product     @relation(fields: [productId], references: [id])
+  lotNumber         String
+  expiryDate        DateTime?   // null per prodotti senza scadenza
+  quantityReceived  Int         // cartoni ricevuti
+  quantityAvailable Int         // cartoni ancora disponibili (decrementato al picking)
+  receivedAt        DateTime    @default(now())
+  sourceOrderId     String?     // ordine INCOMING che ha generato questo lotto
+  sourceOrder       Order?      @relation(fields: [sourceOrderId], references: [id])
+  orderLines        OrderLine[]
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@unique([productId, lotNumber])
+  @@index([productId, expiryDate]) // ottimizza query FIFO (ORDER BY expiryDate ASC)
 }
 
 model PushSubscription {
