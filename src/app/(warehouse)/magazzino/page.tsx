@@ -1,10 +1,18 @@
 import Link from "next/link"
+import { redirect } from "next/navigation"
+import { auth } from "@/lib/auth"
 import { getOrdersForWarehouse } from "@/lib/queries"
 import { Package, Clock, AlertCircle, CheckCircle, ChevronRight } from "lucide-react"
 
 export const dynamic = "force-dynamic"
 
 export default async function MagazzinoPage() {
+  const session = await auth()
+  const role = (session?.user as { role?: string } | undefined)?.role
+  if (role === "ADMIN" || role === "USER") {
+    redirect("/ordini?status=IN_PREPARATION")
+  }
+
   const orders = await getOrdersForWarehouse()
 
   const pending = orders.filter((o) => o.status === "PENDING")

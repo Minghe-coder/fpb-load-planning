@@ -45,6 +45,9 @@ export interface LayerPlacement {
   cartonDimLengthCm: number
   /** Dimensione del cartone orientata lungo il lato 80 */
   cartonDimWidthCm: number
+  /** Impronta reale del layer (≤ dimensioni pallet, ≤ layer sotto) */
+  usedLengthCm: number
+  usedWidthCm: number
   layerHeightCm: number
   cumulativeHeightCm: number
   layerWeightKg: number
@@ -82,9 +85,9 @@ export function palletize(
 
   const warnings: string[] = []
 
-  // Valida che ogni cartone entri fisicamente nel pallet
+  // Valida che ogni cartone entri fisicamente nel pallet (senza vincolo sporgenze)
   for (const item of items) {
-    const { count } = bestOrientation(item.lengthCm, item.widthCm, config)
+    const { count } = bestOrientation(item.lengthCm, item.widthCm, config.lengthCm, config.widthCm)
     if (count === 0) {
       throw new Error(
         `Prodotto "${item.productName}" (${item.lengthCm}×${item.widthCm} cm) ` +
@@ -115,6 +118,9 @@ export function palletize(
   let currentHeight = 0
   let currentWeight = 0
   let layerCounter = 0
+  // Impronta massima disponibile per il prossimo layer (vincolo no-sporgenze)
+  let currentTopL = config.lengthCm
+  let currentTopW = config.widthCm
 
   const commitPallet = () => {
     if (currentLayers.length === 0) return
@@ -123,27 +129,32 @@ export function palletize(
     currentHeight = 0
     currentWeight = 0
     layerCounter = 0
+    currentTopL = config.lengthCm
+    currentTopW = config.widthCm
   }
 
   for (const item of sorted) {
     let remaining = item.totalCartons
-    const orient = bestOrientation(item.lengthCm, item.widthCm, config)
-    const cpl = orient.count // cartons per layer (max)
 
     while (remaining > 0) {
-      // Peso disponibile nel pallet corrente
+      // Calcola orientamento rispettando l'impronta del layer sottostante
+      const orient = bestOrientation(item.lengthCm, item.widthCm, currentTopL, currentTopW)
+
       const weightAvail = config.maxWeightKg - currentWeight
       const maxByWeight = Math.floor(weightAvail / item.grossWeightKgPerCarton)
-
-      // Altezza disponibile
       const heightFits = currentHeight + item.heightCm <= config.maxHeightCm
 
-      if (!heightFits || maxByWeight === 0) {
+      // Nuovo pallet se: altezza esaurita, peso esaurito, oppure nessun cartone
+      // entra nell'impronta del layer corrente (vincolo no-sporgenze)
+      if (!heightFits || maxByWeight === 0 || orient.count === 0) {
         commitPallet()
-        continue // ricicla il while con il pallet nuovo
+        continue
       }
 
-      const canPlace = Math.min(remaining, cpl, maxByWeight)
+      const canPlace = Math.min(remaining, orient.count, maxByWeight)
+      const usedL = orient.rowsAlongL * orient.dimL
+      const usedW = orient.rowsAlongW * orient.dimW
+
       currentHeight += item.heightCm
       currentWeight += canPlace * item.grossWeightKgPerCarton
       layerCounter++
@@ -157,6 +168,8 @@ export function palletize(
         cartonsAlongWidth: orient.rowsAlongW,
         cartonDimLengthCm: orient.dimL,
         cartonDimWidthCm: orient.dimW,
+        usedLengthCm: usedL,
+        usedWidthCm: usedW,
         layerHeightCm: item.heightCm,
         cumulativeHeightCm: currentHeight,
         layerWeightKg: canPlace * item.grossWeightKgPerCarton,
@@ -165,6 +178,10 @@ export function palletize(
         foodCategory: item.foodCategory,
         densityKgM3: densityKgM3(item),
       })
+
+      // Il layer appena posizionato diventa il tetto per il prossimo
+      currentTopL = usedL
+      currentTopW = usedW
 
       remaining -= canPlace
     }
@@ -199,14 +216,15 @@ interface Orientation {
 function bestOrientation(
   lCm: number,
   wCm: number,
-  config: PalletConfig
+  maxL: number,
+  maxW: number,
 ): Orientation {
-  const o1L = Math.floor(config.lengthCm / lCm)
-  const o1W = Math.floor(config.widthCm / wCm)
+  const o1L = Math.floor(maxL / lCm)
+  const o1W = Math.floor(maxW / wCm)
   const o1 = o1L * o1W
 
-  const o2L = Math.floor(config.lengthCm / wCm)
-  const o2W = Math.floor(config.widthCm / lCm)
+  const o2L = Math.floor(maxL / wCm)
+  const o2W = Math.floor(maxW / lCm)
   const o2 = o2L * o2W
 
   if (o1 >= o2) {
