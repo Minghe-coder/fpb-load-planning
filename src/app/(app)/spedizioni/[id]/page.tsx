@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { notFound } from "next/navigation"
 import { format } from "date-fns"
 import { it } from "date-fns/locale"
-import { ArrowLeft, BarChart3, Pencil } from "lucide-react"
+import { ArrowLeft, BarChart3, Pencil, ClipboardList } from "lucide-react"
 import Link from "next/link"
 import { DeleteShipmentButton } from "./delete-button"
 import { DeleteLineButton } from "./delete-line-button"
@@ -134,6 +134,41 @@ export default async function ShipmentDetailPage({
           </div>
         ))}
       </div>
+
+      {/* Ordini collegati */}
+      {shipment.orders.length > 0 && (
+        <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+          <div className="flex items-center gap-2 border-b border-slate-100 px-5 py-4 bg-slate-50/60">
+            <ClipboardList className="h-4 w-4 text-slate-400" strokeWidth={1.75} />
+            <span className="font-semibold text-sm text-slate-700">Generata da</span>
+          </div>
+          <div className="flex flex-wrap gap-2 px-5 py-4">
+            {shipment.orders.map((o) => {
+              const statusMap: Record<string, { label: string; className: string }> = {
+                PENDING:        { label: "In attesa",      className: "bg-slate-100 text-slate-600 ring-slate-200" },
+                IN_PREPARATION: { label: "In preparazione", className: "bg-sky-50 text-sky-700 ring-sky-200" },
+                READY:          { label: "Pronto",          className: "bg-emerald-50 text-emerald-700 ring-emerald-200" },
+                SHIPPED:        { label: "Spedito",         className: "bg-violet-50 text-violet-700 ring-violet-200" },
+              }
+              const s = statusMap[o.status] ?? { label: o.status, className: "bg-slate-100 text-slate-600 ring-slate-200" }
+              const label = o.customer?.name ?? o.supplier?.name ?? "—"
+              return (
+                <Link
+                  key={o.id}
+                  href={`/ordini/${o.id}`}
+                  className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 hover:bg-slate-50 transition-colors"
+                >
+                  <span className="font-mono text-sm font-semibold text-slate-800">
+                    {o.orderNumber ?? o.id.slice(0, 8)}
+                  </span>
+                  <span className="text-xs text-slate-500">{label}</span>
+                  <Badge className={s.className}>{s.label}</Badge>
+                </Link>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Tabella allocazione */}
       {isMultiCustomer ? (

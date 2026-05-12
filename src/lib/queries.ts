@@ -181,6 +181,16 @@ export async function getShipmentDetail(id: string) {
         include: { product: true, customer: true },
         orderBy: { effectiveWeightKg: "desc" },
       },
+      orders: {
+        select: {
+          id: true,
+          orderNumber: true,
+          status: true,
+          requestedDate: true,
+          customer: { select: { name: true } },
+          supplier: { select: { name: true } },
+        },
+      },
     },
   })
 }
