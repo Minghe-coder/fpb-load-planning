@@ -15,9 +15,8 @@ export async function POST(req: NextRequest) {
   const buffer = Buffer.from(await file.arrayBuffer())
 
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { PDFParse } = require("pdf-parse")
-  const parser = new PDFParse({ data: buffer })
-  const data = await parser.getText()
+  const pdfParse = require("pdf-parse")
+  const data = await pdfParse(buffer)
   const text: string = data.text
 
   const products = await db.product.findMany({
@@ -37,7 +36,7 @@ export async function POST(req: NextRequest) {
     lines = parseGenericLines(text, products)
   }
 
-  return NextResponse.json({ rawText: text.slice(0, 2000), lines, pageCount: data.total, meta })
+  return NextResponse.json({ rawText: text.slice(0, 2000), lines, pageCount: data.numpages, meta })
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
