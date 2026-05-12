@@ -56,6 +56,7 @@ export function NewOrderForm({
   const [parsing, setParsing] = useState(false)
   const [parseError, setParseError] = useState("")
   const [parsedLines, setParsedLines] = useState<ParsedLine[] | null>(null)
+  const [parseMeta, setParseMeta] = useState<{ format?: string; customerName?: string } | null>(null)
   const [sourceFile, setSourceFile] = useState("")
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -80,6 +81,16 @@ export function NewOrderForm({
       if (!res.ok) throw new Error(data.error ?? "Errore parsing")
       setSourceFile(file.name)
       setParsedLines(data.lines as ParsedLine[])
+      if (data.meta) {
+        setParseMeta(data.meta)
+        if (data.meta.orderNumber && !orderNumber) setOrderNumber(data.meta.orderNumber)
+        if (data.meta.requestedDate && !requestedDate) setRequestedDate(data.meta.requestedDate)
+        if (data.meta.customerName && !customerId) {
+          const keyword = data.meta.customerName.split(/\s+/)[0].toLowerCase()
+          const match = customers.find((c) => c.name.toLowerCase().includes(keyword))
+          if (match) setCustomerId(match.id)
+        }
+      }
     } catch (e) {
       setParseError(e instanceof Error ? e.message : "Errore parsing PDF")
     } finally {
@@ -263,6 +274,16 @@ export function NewOrderForm({
           )}
         </div>
         <input ref={fileRef} type="file" accept=".pdf" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f) }} />
+
+        {parseMeta && (
+          <div className="flex items-center gap-2 rounded-lg bg-indigo-50 border border-indigo-200 px-3 py-2">
+            <CheckCircle2 className="h-4 w-4 text-indigo-500 shrink-0" />
+            <p className="text-xs text-indigo-700">
+              Formato rilevato: <span className="font-semibold">{parseMeta.format}</span>
+              {parseMeta.customerName && <> · Cliente: <span className="font-semibold">{parseMeta.customerName}</span></>}
+            </p>
+          </div>
+        )}
 
         {parseError && (
           <div className="flex items-center gap-2 rounded-lg bg-red-50 border border-red-200 px-3 py-2">
